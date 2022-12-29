@@ -7,12 +7,14 @@ program     : declartion* EOF
             ;
             
 declaration : varDecl
+            | funDecl
             | statement
             ;
             
 statement   : exprStmt
             | ifStmt
             | printStmt
+            | returnStmt
             | while
             | block
             ;
@@ -35,7 +37,20 @@ for         : 'for' '(' (varDecl|exprStmt) ';' expression? ';' expression?
 block       : '{' declaration* '}'
             ;
           
-varDecl     : 'var' IDENTIFIER ('=' expr)? ';';
+varDecl     : 'var' IDENTIFIER ('=' expr)? ';'
+            ;
+            
+funDecl     : 'fun' function
+            ;
+            
+function    : IDENTIFIER '(' parameters? ')' block
+            ;
+            
+parameters  : IDENTIFIER ( ',' IDENTIFIER )*
+            ;
+            
+returnStmt  : 'return' expression? ';'
+            ;
 
 expression  : assignment
             ;
@@ -67,12 +82,22 @@ factor      : unary ( ('/' | '*') unary )*
             ;
 
 unary       : ( '-' | '!' ) unary
-            | primary
+            | unary
+            ;
+
+call        : primary ( '(' arguments? ')' )*
+            ;
+            
+arguments   : expression ( ',' expression )*
             ;
             
 primary     : literal
+            | anonFunc
             | '(' expression ')' 
             | IDENTIFIER
+            ;
+            
+anonFunc    : 'fun' '(' parameters ')' block
             ;
 
 literal     : NUMBER

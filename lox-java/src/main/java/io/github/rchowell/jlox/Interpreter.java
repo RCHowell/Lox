@@ -4,12 +4,33 @@ import java.util.*;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+
+    private Environment environment = globals;
+
+    public Interpreter() {
+        globals.define("clock", new LoxCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double) System.currentTimeMillis() / 1000.0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn>";
+            }
+        });
+    }
 
     void interpret(List<Stmt> statements) {
         try {
             for (Stmt statement : statements) {
-               execute(statement) ;
+                execute(statement);
             }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
@@ -48,6 +69,22 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        LoxFunction function = new LoxFunction(stmt, environment);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.value != null) {
+            value = evaluate(stmt.value);
+        }
+        throw new Return(value);
+    }
+
+    @Override
     public Void visitVarStmt(Stmt.Var stmt) {
         Object value = null;
         if (stmt.initializer != null) {
@@ -61,6 +98,24 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitBlockStmt(Stmt.Block stmt) {
         executeBlock(stmt.statements, new Environment(environment));
         return null;
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr arg : expr.arguments) {
+            arguments.add(evaluate(arg));
+        }
+        if (!(callee instanceof LoxCallable)) {
+            throw new RuntimeError(expr.paren, "Can only call functions and classes");
+        }
+        LoxCallable function = (LoxCallable) callee;
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expected " + function.arity() + " arguments, but got " + arguments.size());
+        }
+        return function.call(this, arguments);
     }
 
     @Override
@@ -157,7 +212,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return !isTruthy(right);
             case MINUS:
                 checkNumberOperand(expr.operator, right);
-                return -(double)right;
+                return -(double) right;
         }
         // Unreachable.
         return null;
@@ -174,6 +229,16 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
         return environment.get(expr.name);
+    }
+
+    /**
+     * Challenge 10.2 Anonymous Functions
+     */
+    @Override
+    public Object visitFunctionExpr(Expr.Function expr) {
+        Token name = new Token(TokenType.IDENTIFIER, "fn", null, 0);
+        Stmt.Function fun = new Stmt.Function(name, expr.params, expr.body);
+        return new LoxFunction(fun, environment);
     }
 
     @Override
@@ -238,17 +303,22 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
      */
     private boolean compare(TokenType type, int v) {
         switch (type) {
-            case GREATER: return v > 0;
-            case GREATER_EQUAL: return v >= 0;
-            case EQUAL_EQUAL: return v == 0;
-            case LESS_EQUAL: return v <= 0;
-            case LESS: return v < 0;
+            case GREATER:
+                return v > 0;
+            case GREATER_EQUAL:
+                return v >= 0;
+            case EQUAL_EQUAL:
+                return v == 0;
+            case LESS_EQUAL:
+                return v <= 0;
+            case LESS:
+                return v < 0;
         }
         // Unreachable.
         return false;
     }
 
-    private void executeBlock(List<Stmt> statements, Environment environment) {
+    void executeBlock(List<Stmt> statements, Environment environment) {
         Environment prev = this.environment;
         try {
             this.environment = environment;
@@ -256,6 +326,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 execute(statement);
             }
         } finally {
-            this.environment = prev;        }
+            this.environment = prev;
+        }
     }
 }

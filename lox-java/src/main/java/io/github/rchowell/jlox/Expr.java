@@ -12,8 +12,10 @@ abstract class Expr {
     R visitLiteralExpr(Literal expr);
     R visitLogicalExpr(Logical expr);
     R visitUnaryExpr(Unary expr);
+    R visitCallExpr(Call expr);
     R visitTernaryExpr(Ternary expr);
     R visitVariableExpr(Variable expr);
+    R visitFunctionExpr(Function expr);
   }
   static class Assign extends Expr {
     Assign(Token name, Expr value) {
@@ -99,6 +101,22 @@ abstract class Expr {
       return visitor.visitUnaryExpr(this);
     }
   }
+  static class Call extends Expr {
+    Call(Expr callee, Token paren, List<Expr> arguments) {
+      this.callee = callee;
+      this.paren = paren;
+      this.arguments = arguments;
+    }
+
+    final Expr callee;
+    final Token paren;
+    final List<Expr> arguments;
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitCallExpr(this);
+    }
+  }
   static class Ternary extends Expr {
     Ternary(Expr condition, Expr left, Expr right) {
       this.condition = condition;
@@ -125,6 +143,20 @@ abstract class Expr {
     @Override
     <R> R accept(Visitor<R> visitor) {
       return visitor.visitVariableExpr(this);
+    }
+  }
+  static class Function extends Expr {
+    Function(List<Token> params, List<Stmt> body) {
+      this.params = params;
+      this.body = body;
+    }
+
+    final List<Token> params;
+    final List<Stmt> body;
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitFunctionExpr(this);
     }
   }
 }
