@@ -9,3 +9,4 @@ thrice(fun (a) {
   print a;
 });
 
+

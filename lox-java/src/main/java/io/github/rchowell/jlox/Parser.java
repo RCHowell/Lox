@@ -29,12 +29,24 @@ public class Parser {
 
     private Stmt declaration() {
         try {
+            if (match(CLASS)) return classDeclaration();
             if (match(VAR)) return varDeclaration();
             return statement();
         } catch (ParseError error) {
             synchronize();
             return null;
         }
+    }
+
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect an identifier");
+        consume(LEFT_BRACE, "Expect { at start of class declaration");
+        List<Stmt.Function> methods = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function("method"));
+        }
+        consume(RIGHT_BRACE, "Expect } at end of class declaration");
+        return new Stmt.Class(name, methods);
     }
 
     private Stmt varDeclaration() {
@@ -116,7 +128,7 @@ public class Parser {
         return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
-    private Stmt function(String kind) {
+    private Stmt.Function function(String kind) {
         // fun name
         Token name = consume(IDENTIFIER, "Expect " + kind + "name.");
         // ( a, b, ... )
@@ -204,6 +216,9 @@ public class Parser {
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
+            } else if (expr instanceof Expr.Get) {
+                Expr.Get getter = (Expr.Get) expr;
+                return new Expr.Set(getter.object, getter.name, value);
             }
             error(equals, "Invalid assignment target");
         }
@@ -284,6 +299,9 @@ public class Parser {
         while (true) {
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr);
+            } else if (match(DOT)) {
+                Token name = consume(IDENTIFIER, "Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
             } else {
                 break;
             }
@@ -301,6 +319,7 @@ public class Parser {
         if (match(FUN)) {
             return anonFunc();
         }
+        if (match(THIS)) return new Expr.This(previous());
         if (match(IDENTIFIER)) {
             return new Expr.Variable(previous());
         }

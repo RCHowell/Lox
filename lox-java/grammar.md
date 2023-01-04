@@ -6,7 +6,8 @@ grammar lox;
 program     : declartion* EOF
             ;
             
-declaration : varDecl
+declaration : classDecl
+            | varDecl
             | funDecl
             | statement
             ;
@@ -36,6 +37,9 @@ for         : 'for' '(' (varDecl|exprStmt) ';' expression? ';' expression?
             
 block       : '{' declaration* '}'
             ;
+           
+classDecl   : 'class' IDENTIFIER '{' function* '}'
+            ;
           
 varDecl     : 'var' IDENTIFIER ('=' expr)? ';'
             ;
@@ -59,8 +63,8 @@ expression  : assignment
 //            | equality
 //            ;
 
-assignment  : IDENTIFIER '=' assignment
-            | equality
+assignment  : (call '.')? IDENTIFIER '=' assignment
+            | logicalOr
             ;
             
 logicOr     : logicAnd ( 'or' logicAnd )*
@@ -85,7 +89,7 @@ unary       : ( '-' | '!' ) unary
             | unary
             ;
 
-call        : primary ( '(' arguments? ')' )*
+call        : primary ( '(' arguments? ')' | '.' IDENTIFIER )*
             ;
             
 arguments   : expression ( ',' expression )*
@@ -94,6 +98,7 @@ arguments   : expression ( ',' expression )*
 primary     : literal
             | anonFunc
             | '(' expression ')' 
+            | 'this'
             | IDENTIFIER
             ;
             

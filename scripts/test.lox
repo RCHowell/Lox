@@ -1,0 +1,23 @@
+var a = "global";
+
+{
+  fun showA() {
+    print a;
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}
+
+
+class Bagel {}
+
+var bagel = Bagel();
+
+print bagel;
+
+bagel.taste = "yummy";
+
+print bagel + " tastes " + bagel.taste;
+

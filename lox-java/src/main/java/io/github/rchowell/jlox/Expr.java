@@ -12,10 +12,13 @@ abstract class Expr {
     R visitLiteralExpr(Literal expr);
     R visitLogicalExpr(Logical expr);
     R visitUnaryExpr(Unary expr);
+    R visitThisExpr(This expr);
     R visitCallExpr(Call expr);
     R visitTernaryExpr(Ternary expr);
     R visitVariableExpr(Variable expr);
     R visitFunctionExpr(Function expr);
+    R visitGetExpr(Get expr);
+    R visitSetExpr(Set expr);
   }
   static class Assign extends Expr {
     Assign(Token name, Expr value) {
@@ -101,6 +104,18 @@ abstract class Expr {
       return visitor.visitUnaryExpr(this);
     }
   }
+  static class This extends Expr {
+    This(Token keyword) {
+      this.keyword = keyword;
+    }
+
+    final Token keyword;
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitThisExpr(this);
+    }
+  }
   static class Call extends Expr {
     Call(Expr callee, Token paren, List<Expr> arguments) {
       this.callee = callee;
@@ -157,6 +172,36 @@ abstract class Expr {
     @Override
     <R> R accept(Visitor<R> visitor) {
       return visitor.visitFunctionExpr(this);
+    }
+  }
+  static class Get extends Expr {
+    Get(Expr object, Token name) {
+      this.object = object;
+      this.name = name;
+    }
+
+    final Expr object;
+    final Token name;
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitGetExpr(this);
+    }
+  }
+  static class Set extends Expr {
+    Set(Expr object, Token name, Expr value) {
+      this.object = object;
+      this.name = name;
+      this.value = value;
+    }
+
+    final Expr object;
+    final Token name;
+    final Expr value;
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitSetExpr(this);
     }
   }
 }
