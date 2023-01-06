@@ -38,7 +38,7 @@ for         : 'for' '(' (varDecl|exprStmt) ';' expression? ';' expression?
 block       : '{' declaration* '}'
             ;
            
-classDecl   : 'class' IDENTIFIER '{' function* '}'
+classDecl   : 'class' IDENTIFIER ('<' IDENTIFIER)? '{' function* '}'
             ;
           
 varDecl     : 'var' IDENTIFIER ('=' expr)? ';'
@@ -99,6 +99,7 @@ primary     : literal
             | anonFunc
             | '(' expression ')' 
             | 'this'
+            | 'super'
             | IDENTIFIER
             ;
             

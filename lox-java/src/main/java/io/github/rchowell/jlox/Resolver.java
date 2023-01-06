@@ -19,6 +19,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         ClassType prevClass = currentClass;
         currentClass = ClassType.CLASS;
         define(stmt.name);
+        if (stmt.superclass != null) {
+
+            if (stmt.superclass.name.lexeme.equals(stmt.name.lexeme)) {
+                Lox.error(stmt.name, "A class cannot inherit from itself");
+            } else {
+                // Create environment to hold `super` in the class definition
+                currentClass = ClassType.SUBCLASS;
+                beginScope();
+                resolve(stmt.superclass);
+            }
+        }
         beginScope();
         scopes.peek().put("this", true);
         for (Stmt.Function method : stmt.methods) {
@@ -30,6 +41,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
         endScope();
         currentClass = prevClass;
+        // End the scope with `super`
+        if (stmt.superclass != null) {
+            endScope();
+        }
         return null;
     }
 
@@ -142,6 +157,18 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
         resolve(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitSuperExpr(Expr.Super expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Cannot use 'super' outside of class");
+        }
+        if (currentClass == ClassType.SUBCLASS) {
+            Lox.error(expr.keyword, "Cannot use 'super' in a class with no subclass");
+        }
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
@@ -265,6 +292,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private enum ClassType {
         NONE,
         CLASS,
+        SUBCLASS,
     }
 }
 

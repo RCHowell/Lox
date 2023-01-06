@@ -40,13 +40,18 @@ public class Parser {
 
     private Stmt classDeclaration() {
         Token name = consume(IDENTIFIER, "Expect an identifier");
+        Expr.Variable superclass = null;
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expected superclass identifier");
+            superclass = new Expr.Variable(previous());
+        }
         consume(LEFT_BRACE, "Expect { at start of class declaration");
         List<Stmt.Function> methods = new ArrayList<>();
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
             methods.add(function("method"));
         }
         consume(RIGHT_BRACE, "Expect } at end of class declaration");
-        return new Stmt.Class(name, methods);
+        return new Stmt.Class(name, superclass, methods);
     }
 
     private Stmt varDeclaration() {
@@ -320,6 +325,12 @@ public class Parser {
             return anonFunc();
         }
         if (match(THIS)) return new Expr.This(previous());
+        if (match(SUPER)) {
+            Token keyword = previous();
+            consume(DOT, "Expect '.' after super");
+            Token method = consume(IDENTIFIER, "Expect method name after super");
+            return new Expr.Super(keyword, method);
+        }
         if (match(IDENTIFIER)) {
             return new Expr.Variable(previous());
         }
