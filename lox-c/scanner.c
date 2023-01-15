@@ -82,7 +82,7 @@ void skipWhitespace() {
 
 static TokenType checkKeyword(int start, int length, const char* rest, TokenType type) {
     // check length, then check bytes
-    if (scanner.current - scanner.start == start + length && memcmp(scanner.start + start, rest, length)) {
+    if (scanner.current - scanner.start == start + length && memcmp(scanner.start + start, rest, length) == 0) {
         return type;
     }
     return TOKEN_IDENTIFIER;
