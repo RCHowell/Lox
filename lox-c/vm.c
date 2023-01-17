@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "common.h"
 #include "debug.h"
 #include "vm.h"
 #include "compiler.h"
+#include "object.h"
+#include "memory.h"
 
 VM vm;
-
 
 static void resetStack() {
     vm.stackTop = vm.stack;
@@ -28,10 +30,11 @@ static void runtimeError(const char* format, ...) {
 
 void initVM() {
     resetStack();
+    vm.objects = NULL;
 }
 
 void freeVM() {
-
+    freeObjects();
 }
 
 void push(Value value) {
@@ -52,18 +55,18 @@ static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static bool valuesEqual(Value a, Value b) {
-    if (a.type != b.type) return false;
-    switch (a.type) {
-        case VAL_BOOL:
-            return AS_BOOL(a) == AS_BOOL(b);
-        case VAL_NIL:
-            return true;
-        case VAL_NUMBER:
-            return AS_NUMBER(a) == AS_NUMBER(b);
-        default:
-            return false;
-    }
+static void concatenate() {
+    ObjString* b = AS_STRING(pop());
+    ObjString* a = AS_STRING(pop());
+    int l = a->length + b->length;
+
+    char* str = ALLOCATE(char, l + 1);
+    memcpy(str, a->chars, a->length);
+    memcpy(str + a->length, b->chars, b->length);
+    str[l] = '\0';
+
+    ObjString* result = takeString(str, l);
+    push(OBJ_VAL(result));
 }
 
 static InterpretResult run() {
@@ -101,7 +104,15 @@ static InterpretResult run() {
                 break;
             }
             case OP_ADD: {
-                BINARY_OP(NUMBER_VAL, +);
+                if (IS_STRING(peek(0)) && IS_STRING(peek(0))) {
+                    concatenate();
+                } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                    double b = AS_NUMBER(pop());
+                    double a = AS_NUMBER(pop());
+                    push(NUMBER_VAL(a + b));
+                } else {
+                    runtimeError("Operands must be two numbers or two strings.");
+                }
                 break;
             }
             case OP_SUBTRACT: {
