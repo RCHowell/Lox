@@ -1,0 +1,24 @@
+print "testing control flow";
+
+
+var a = true;
+if (a) {
+    print "a is true" ;
+}
+
+a = false;
+if (a) {
+    print "a is still true";
+} else {
+    print "a is false";
+}
+
+var i = 0;
+var n = 20;
+
+print i < n;
+
+while (i < n) {
+  print "test";
+  i = i + 1;
+}
