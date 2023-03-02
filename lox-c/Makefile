@@ -4,7 +4,7 @@
 TARGET = clox
 LIBS = -lm
 CC = gcc
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -Wno-incompatible-pointer-types
 
 .PHONY: default all clean
 
