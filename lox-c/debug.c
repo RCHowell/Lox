@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "chunk.h"
 #include "debug.h"
 #include "object.h"
 #include "value.h"
@@ -118,6 +119,12 @@ int disassembleInstruction(Chunk* chunk, int offset) {
         }
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
+        case OP_CLASS:
+            return constantInstruction("OP_CLASS", chunk, offset);
+        case OP_GET_PROPERTY:
+            return constantInstruction("OP_GET_PROPERTY", chunk, offset);
+        case OP_SET_PROPERTY:
+            return constantInstruction("OP_SET_PROPERTY", chunk, offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;
