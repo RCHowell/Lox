@@ -1,0 +1,21 @@
+
+print "testing control flow";
+
+fun areWeHavingItYet() {
+  print "Yes we are!";
+}
+
+
+print areWeHavingItYet;
+
+var a = true;
+if (a) {
+    print "a is true" ;
+}
+
+a = false;
+if (a) {
+    print "a is still true";
+} else {
+    print "a is false";
+}

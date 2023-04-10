@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -95,7 +96,9 @@ bool tableDelete(Table* table, ObjString* key) {
 void tableAddAll(Table* from, Table* to) {
     for (int i = 0; i < from->capacity; i++) {
         Entry* entry = &from->entries[i];
-        if (entry != NULL) tableSet(to, entry->key, entry->value);
+        if (entry->key != NULL) {
+            tableSet(to, entry->key, entry->value);
+        }
     }
 }
 
